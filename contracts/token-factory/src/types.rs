@@ -54,10 +54,11 @@ pub struct ContractMetadata {
 /// * `symbol` - Token symbol (e.g., "MTK")
 /// * `decimals` - Number of decimal places (typically 7 for Stellar)
 /// * `total_supply` - Current circulating supply after burns
-/// * `metadata_uri` - Optional IPFS URI for additional metadata
-/// * `created_at` - Unix timestamp of token creation
+/// * `initial_supply` - Initial supply at token creation
 /// * `total_burned` - Cumulative amount of tokens burned
 /// * `burn_count` - Number of burn operations performed
+/// * `metadata_uri` - Optional IPFS URI for additional metadata
+/// * `created_at` - Unix timestamp of token creation
 /// * `clawback_enabled` - Whether admin can burn from any address
 ///
 /// # Examples
@@ -79,8 +80,6 @@ pub struct TokenInfo {
     pub burn_count: u32,
     pub metadata_uri: Option<String>,
     pub created_at: u64,
-    pub total_burned: i128,
-    pub burn_count: u32,
     pub clawback_enabled: bool,
 }
 
