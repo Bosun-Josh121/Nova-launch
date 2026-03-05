@@ -113,7 +113,7 @@ pub fn emit_token_registered(env: &Env, token_address: &Address, creator: &Addre
 /// The ledger automatically records transaction timestamps.
 pub fn emit_admin_transfer(env: &Env, old_admin: &Address, new_admin: &Address) {
     env.events().publish(
-        (symbol_short!("adm_xf_v1"),),
+        (symbol_short!("adm_xfer"),),
         (old_admin, new_admin),
     );
 }
@@ -171,7 +171,7 @@ pub fn emit_unpause(env: &Env, admin: &Address) {
 /// **Schema Stability**: This schema is immutable. Any changes require a new version.
 pub fn emit_fees_updated(env: &Env, base_fee: i128, metadata_fee: i128) {
     env.events().publish(
-        (symbol_short!("fee_up_v1"),),
+        (symbol_short!("fees_upd"),),
         (base_fee, metadata_fee),
     );
 }
@@ -201,7 +201,7 @@ pub fn emit_admin_burn(
     amount: i128,
 ) {
     env.events().publish(
-        (symbol_short!("adm_br_v1"), token_address.clone()),
+        (symbol_short!("adm_burn"), token_address.clone()),
         (admin, from, amount),
     );
 }
@@ -249,21 +249,22 @@ pub fn emit_clawback_toggled(
 /// Used when multiple tokens are burned in a batch operation
 pub fn emit_token_burned(env: &Env, token_address: &Address, amount: i128) {
     env.events().publish(
-        (symbol_short!("tok_br_v1"), token_address.clone()),
+        (symbol_short!("tkn_burn"), token_address.clone()),
         (amount,),
     );
 }
 
-
-// ── Timelock events ─────────────────────────────────────────
-
-/// Emit timelock configured event
-///
-/// Emitted when timelock is initialized or updated
-pub fn emit_timelock_configured(env: &Env, delay_seconds: u64) {
+/// Emit token created event
+/// 
+/// Published when a new token is successfully created
+pub fn emit_token_created(
+    env: &Env,
+    token_address: &Address,
+    creator: &Address,
+) {
     env.events().publish(
-        (symbol_short!("tl_cfg"),),
-        (delay_seconds,),
+        (symbol_short!("tkn_crtd"), token_address.clone()),
+        creator,
     );
 }
 
@@ -373,5 +374,19 @@ pub fn emit_treasury_policy_updated(env: &Env, daily_cap: i128, allowlist_enable
     env.events().publish(
         (symbol_short!("trs_pol"),),
         (daily_cap, allowlist_enabled),
+    );
+}
+
+/// Emit batch tokens created event
+/// 
+/// Published when multiple tokens are created in a batch operation
+pub fn emit_batch_tokens_created(
+    env: &Env,
+    creator: &Address,
+    count: u32,
+) {
+    env.events().publish(
+        (symbol_short!("batch_tkn"),),
+        (creator, count),
     );
 }

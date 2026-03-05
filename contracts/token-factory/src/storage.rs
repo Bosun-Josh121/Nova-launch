@@ -96,7 +96,7 @@ pub fn get_factory_state(env: &Env) -> FactoryState {
 
 /// ============================================================
 ///  Security Test Suite — Burn Feature (Issue #163)
-///  Nova-launch / token-factory
+///  Temporarily disabled due to compilation errors with Result types
 /// ============================================================
 ///
 ///  Coverage map (matches issue #163 checklist):
@@ -107,8 +107,8 @@ pub fn get_factory_state(env: &Env) -> FactoryState {
 ///  [INPUT] Input Validation
 ///  [DOS]   DoS & Resource Exhaustion
 
-// Temporarily disabled - has compilation errors
 /*
+// Temporarily disabled due to compilation issues with burn tests
 #[cfg(test)]
 mod burn_security_tests {
     use soroban_sdk::{
@@ -596,6 +596,35 @@ pub fn increment_burn_count(env: &Env, token_index: u32) {
 
 // ── Burn feature additions ─────────────────────────────────
 
+// ── Token-level pause ─────────────────────────────────────
+
+pub fn is_token_paused(env: &Env, token_index: u32) -> bool {
+    env.storage()
+        .instance()
+        .get(&crate::types::DataKey::TokenPaused(token_index))
+        .unwrap_or(false)
+}
+
+pub fn set_token_paused(env: &Env, token_index: u32, paused: bool) {
+    env.storage()
+        .instance()
+        .set(&crate::types::DataKey::TokenPaused(token_index), &paused);
+}
+
+pub fn get_total_burned(env: &Env, token_index: u32) -> i128 {
+    env.storage()
+        .persistent()
+        .get(&crate::types::DataKey::TotalBurned(token_index))
+        .unwrap_or(0)
+}
+
+pub fn add_total_burned(env: &Env, token_index: u32, amount: i128) {
+    let current = get_total_burned(env, token_index);
+    let updated = current.checked_add(amount).unwrap_or(i128::MAX);
+    env.storage()
+        .persistent()
+        .set(&crate::types::DataKey::TotalBurned(token_index), &updated);
+}
 // Pause management
 pub fn is_paused(env: &Env) -> bool {
     env.storage()
@@ -801,4 +830,58 @@ pub fn set_allowed_recipient(env: &Env, recipient: &Address, allowed: bool) {
     env.storage()
         .persistent()
         .set(&DataKey::AllowedRecipient(recipient.clone()), &allowed);
+}
+
+// ── Stream storage functions ───────────────────────────────
+
+/// Get the total number of streams created
+pub fn get_stream_count(env: &Env) -> u32 {
+    env.storage()
+        .instance()
+        .get(&DataKey::StreamCount)
+        .unwrap_or(0)
+}
+
+/// Increment stream count and return new ID
+pub fn increment_stream_count(env: &Env) -> u32 {
+    let count = get_stream_count(env) + 1;
+    env.storage().instance().set(&DataKey::StreamCount, &count);
+    count
+}
+
+/// Get stream info by ID
+pub fn get_stream(env: &Env, stream_id: u32) -> Option<crate::stream_types::StreamInfo> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::Stream(stream_id))
+}
+
+/// Store stream info
+pub fn set_stream(env: &Env, stream_id: u32, stream: &crate::stream_types::StreamInfo) {
+    env.storage()
+        .persistent()
+        .set(&DataKey::Stream(stream_id), stream);
+}
+
+/// Add stream to creator's index for pagination
+pub fn add_creator_stream(env: &Env, creator: &Address, stream_id: u32) {
+    let mut streams: soroban_sdk::Vec<u32> = env
+        .storage()
+        .persistent()
+        .get(&DataKey::StreamByCreator(creator.clone(), 0))
+        .unwrap_or(soroban_sdk::Vec::new(env));
+    
+    streams.push_back(stream_id);
+    
+    env.storage()
+        .persistent()
+        .set(&DataKey::StreamByCreator(creator.clone(), 0), &streams);
+}
+
+/// Get all stream IDs for a creator
+pub fn get_creator_streams(env: &Env, creator: &Address) -> soroban_sdk::Vec<u32> {
+    env.storage()
+        .persistent()
+        .get(&DataKey::StreamByCreator(creator.clone(), 0))
+        .unwrap_or(soroban_sdk::Vec::new(env))
 }
